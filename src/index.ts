@@ -1,4 +1,5 @@
 import database from "./database";
+import { log, error, success } from './logging';
 
 
 const main = async () => {
@@ -6,9 +7,9 @@ const main = async () => {
     const driver = database.getDriver(ledger);
     const session = await database.getSession(driver);
 
-    console.log(`# Table Names in the Ledger: '${ledger}'`);
+    log(`# Table Names in the Ledger: '${ledger}'`);
     for( const table of await session.getTableNames()) {
-        console.log(table);
+        log(table);
     }
 
     database.closeSession(session);
@@ -16,6 +17,6 @@ const main = async () => {
 
 if (require.main === module) {
     main()
-        .then(() => console.log('Done'))
-        .catch(error => console.error(`Error: ${error?error.message:'Unknown'}`));
+        .then(() => success('Done'))
+        .catch(error => error('Error', error));
 }

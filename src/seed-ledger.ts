@@ -1,4 +1,5 @@
 import database, { closeSession } from './database';
+import { log, error, success } from './logging';
 import { TransactionExecutor, Result } from 'amazon-qldb-driver-nodejs';
 
 const createTable = (executor: TransactionExecutor, tableName: string): Promise<Result> =>
@@ -17,10 +18,10 @@ const main = async () => {
                 createTable(txn, 'Person'),
                 createTable(txn, 'DriversLicense'),
             ]), 
-            () => console.log('Retruing due to OCC conflict...')
+            () => log('Retruing due to OCC conflict...')
         );
     } catch(error) {
-        console.error(`Error creating tables: ${error?error.message:'Unknown'}`);
+        error('Error creating tables', error);
     } finally {
         database.closeSession(session);
     }
@@ -29,6 +30,6 @@ const main = async () => {
 
 if (require.main === module) {
     main()
-        .then(() => console.log('# Seed Complete'))
-        .catch(error => console.error(`Error Seeding Ledger '${error?error.message:'Unknown'}'`));
+        .then(() => success('# Seed Complete'))
+        .catch(error => error('Error Seeding Ledger', error));
 }
