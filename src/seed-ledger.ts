@@ -1,27 +1,32 @@
+import * as R from 'ramda';
 import database, { closeSession } from './database';
 import { log, error, success } from './logging';
-import { TransactionExecutor, Result } from 'amazon-qldb-driver-nodejs';
+import { TransactionExecutor, Result, QldbSession } from 'amazon-qldb-driver-nodejs';
+import { getLedgerName } from './settings';
 
 const createTable = (executor: TransactionExecutor, tableName: string): Promise<Result> =>
     executor.executeInline(`CREATE TABLE ${tableName}`);
-;
-const main = async () => {
-    const ledger = process.env.LEDGER_NAME || 'vehicle-registration';
-    const driver = database.getDriver(ledger);
+
+const createTables = (session: QldbSession, tableNames: string[]) => 
+    session.executeLambda(
+        async (txn) => Promise.all(R.map(R.partial(createTable, [txn]), tableNames)),
+        () => log('Retruing due to OCC conflict...')
+    );
+
+const main = async (ledgerName: string) => {
+    const driver = database.getDriver(ledgerName);
     const session = await database.getSession(driver);
 
     try {
-        await session.executeLambda(async (txn) =>
-            Promise.all([
-                createTable(txn, 'VehicleRegistration'),
-                createTable(txn, 'Vehicle'),
-                createTable(txn, 'Person'),
-                createTable(txn, 'DriversLicense'),
-            ]), 
-            () => log('Retruing due to OCC conflict...')
+        await createTables(
+            session, 
+            [
+                'VehicleRegistration',
+                'Vehicle',
+                'Person',
+                'DriversLicense',
+            ]
         );
-    } catch(error) {
-        error('Error creating tables', error);
     } finally {
         database.closeSession(session);
     }
@@ -29,7 +34,7 @@ const main = async () => {
 };
 
 if (require.main === module) {
-    main()
+    main(getLedgerName())
         .then(() => success('# Seed Complete'))
-        .catch(error => error('Error Seeding Ledger', error));
+        .catch(err => error('Error Seeding Ledger', err));
 }

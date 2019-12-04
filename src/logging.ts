@@ -20,7 +20,7 @@ export const log = (message: string): void =>
 
 export const error = (message: string, error?: Error): void =>
     error
-        ? console.error(chalk.red(formatErrorMessage))
+        ? console.error(chalk.red(formatErrorMessage(message, error)))
         : console.error(chalk.red(message));
 
 export const success = (message: string): void =>
