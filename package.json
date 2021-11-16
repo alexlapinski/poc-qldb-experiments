@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "amazon-qldb-driver-nodejs": "0.1.0-preview.2",
-    "aws-sdk": "^2.582.0",
+    "aws-sdk": "^2.814.0",
     "chalk": "^3.0.0",
     "ion-js": "^3.1.2",
     "ramda": "^0.26.1"
